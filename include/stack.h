@@ -10,13 +10,12 @@
 
 //-----------------------------------------------------------------------------------------------------------
 
-#define CANARY_PROTECTION
 #define DEBUG
 
 //-----------------------------------------------------------------------------------------------------------
 
 #ifdef DEBUG
-#define ON_DEBUG(code, ...) code __VA_ARGS__
+#define ON_DEBUG(code, ...) code ##__VA_ARGS__
 #else
 #define ON_DEBUG(code) 
 #endif
@@ -60,7 +59,6 @@ struct Stack
 
   ON_DEBUG(
   long long hash;
-
   canary_t stack_right_can;
       );
 };

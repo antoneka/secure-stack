@@ -7,8 +7,9 @@ int main()
 {
   Stack stk = {};
 
-  int creation_staus = STACK_CTOR(&stk, 2);
+  int creation_status = STACK_CTOR(nullptr, 2);
 
+  /*
   stackPush(&stk, 2);
 
   stackPush(&stk, 5);
@@ -27,6 +28,7 @@ int main()
   
 
   STACK_DUMP(&stk);
+  */
 
   int destruction_status = stackDtor(&stk);
 
