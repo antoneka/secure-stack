@@ -1,11 +1,19 @@
 #include <assert.h>
 #include "common.h"
+#include "stack_protection.h"
 #include "stack.h"
+
+
+static void fillWithCanary(Stack *stk);
+
+static void fillWithPoison(Stack *stk, size_t src, size_t dst);
+
+static void shiftArray(Stack *stk, size_t shift, ShiftDir direction);
 
 //-----------------------------------------------------------------------------------------------------------
 
-ExecStatus stackCtor(Stack *stk, const char *var_name, const char *file_name, 
-                     size_t line_num, const char *func_name)
+ExecStatus stackCtor(Stack *stk, size_t initial_cap, const char *var_name, 
+                     const char *file_name, size_t line_num, const char *func_name)
 {
   assert(stk != nullptr);
 
@@ -14,15 +22,15 @@ ExecStatus stackCtor(Stack *stk, const char *var_name, const char *file_name,
       return STACK_ALREADY_CONSTRUCTED;
     }
   
-  stk->capacity = STANDART_CAPACITY;
+  stk->capacity = initial_cap;
   stk->size = 0;
 
-  stk->data = (elem_t*)calloc(stk->capacity, sizeof(elem_t));
+  stk->err_code = 0;
 
-  if (stk->data == nullptr)
-    {
-      return STACK_ALLOCATION_ERROR;
-    }
+  stk->var = var_name;
+  stk->file = file_name;
+  stk->line = line_num;
+  stk->func = func_name;
 
   stk->log_output = fopen("stack_log.txt", "a+");
 
@@ -31,12 +39,33 @@ ExecStatus stackCtor(Stack *stk, const char *var_name, const char *file_name,
       return LOGFILE_OPENING_ERROR;
     }
 
-  stk->var = var_name;
-  stk->file = file_name;
-  stk->line = line_num;
-  stk->func = func_name;
+  ON_DEBUG(
+  stk->stack_left_can = CANARY_VALUE;
+  stk->stack_right_can = CANARY_VALUE;
 
-  stk->err_code = 0;
+  stk->data = (elem_t*)calloc(2 * sizeof(canary_t) + stk->capacity * sizeof(elem_t), sizeof(char));
+
+  if (stk->data == nullptr)
+    {
+      return STACK_ALLOCATION_ERROR;
+    }
+
+  fillWithCanary(stk);
+
+  shiftArray(stk, 1, RIGHT_SHIFT);
+
+  fillWithPoison(stk, 0, stk->capacity);
+      );
+
+  NO_DEBUG(
+  stk->data = (elem_t*)calloc(stk->capacity, sizeof(elem_t));
+
+  if (stk->data == nullptr)
+    {
+      return STACK_ALLOCATION_ERROR;
+    }
+      );
+
   stk->init_status = CONSTRUCTED;
 
   return EXECUTION_SUCCESS;
@@ -71,7 +100,9 @@ ExecStatus stackPop(Stack *stk, elem_t *return_value)
 
   *return_value = stk->data[--stk->size];
 
-  if (stk->size * MAX_DIFF_COEF < stk->capacity)
+  stk->data[stk->size] = POISON_VALUE;
+
+  if (stk->size * RESIZE_COEF < stk->capacity)
     {
       ExecStatus resize_status = stackResize(stk, stk->capacity / RESIZE_COEF);
 
@@ -86,11 +117,53 @@ ExecStatus stackPop(Stack *stk, elem_t *return_value)
 
 //-----------------------------------------------------------------------------------------------------------
 
+static void fillWithCanary(Stack *stk)
+{
+  canary_t *canary_left = (canary_t*)stk->data;
+  canary_t *canary_right = (canary_t*)((elem_t*)(canary_left + 1) + stk->capacity);
+
+  *canary_left = CANARY_VALUE;
+  *canary_right = CANARY_VALUE;
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
+static void fillWithPoison(Stack *stk, size_t src, size_t dst)
+{
+  for (size_t elem_cnt = src; elem_cnt < dst; elem_cnt++) 
+    {
+      stk->data[elem_cnt] = POISON_VALUE;
+    }
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
+static void shiftArray(Stack *stk, size_t shift, ShiftDir direction)
+{
+  canary_t* data_canary_cast = (canary_t*)stk->data;
+
+  if (direction == LEFT_SHIFT)
+    {
+      data_canary_cast -= shift;
+    }
+  else if (direction == RIGHT_SHIFT)
+    {
+      data_canary_cast += shift;
+    }
+
+  stk->data = (elem_t*)data_canary_cast;
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
 ExecStatus stackResize(Stack *stk, size_t new_capacity)
 {
   stk->capacity = new_capacity;
 
-  elem_t *data_tmp = (elem_t*)realloc(stk->data, stk->capacity);
+  ON_DEBUG(
+  shiftArray(stk, 1, LEFT_SHIFT);
+
+  elem_t *data_tmp = (elem_t*)realloc(stk->data, stk->capacity * sizeof(elem_t) + 2 * sizeof(canary_t));
 
   if (data_tmp == nullptr)
     {
@@ -98,6 +171,26 @@ ExecStatus stackResize(Stack *stk, size_t new_capacity)
     }
 
   stk->data = data_tmp;
+
+  fillWithCanary(stk);
+
+  shiftArray(stk, 1, RIGHT_SHIFT);
+
+  fillWithPoison(stk, stk->size, stk->capacity);
+      );
+
+  NO_DEBUG(
+  elem_t *data_tmp = (elem_t*)realloc(stk->data, stk->capacity * sizeof(elem_t));
+
+  if (data_tmp == nullptr)
+    {
+      return STACK_REALLOCATION_ERROR;
+    }
+
+  stk->data = data_tmp;
+
+  fillWithPosion(stk, stk->size, stk->capacity);
+      );
 
   return EXECUTION_SUCCESS;
 }
@@ -122,8 +215,15 @@ ExecStatus stackDtor(Stack *stk)
   stk->line = 0;
   stk->func = nullptr;
 
+  ON_DEBUG(
+  stk->stack_left_can = POISON_VALUE;
+  stk->stack_right_can = POISON_VALUE;
+      );
+
   fclose(stk->log_output);
   stk->log_output = nullptr;
+
+  shiftArray(stk, 1, LEFT_SHIFT);
 
   free(stk->data);
   stk->data = nullptr;

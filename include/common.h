@@ -11,12 +11,16 @@ enum ExecStatus
   STACK_ALREADY_DESTRUCTED  = 6,
 };
 
-/*
-enum InitStatus
+enum StackStatus
 {
   CONSTRUCTED = 1,
   DESTRUCTED  = 2,
 };
-*/
+
+enum ShiftDir
+{
+  LEFT_SHIFT  = 1,
+  RIGHT_SHIFT = 2,
+};
 
 #endif // COMMON_H

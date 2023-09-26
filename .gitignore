@@ -1,6 +1,8 @@
 .obj
 stack_log.txt
 stack
+compile_commands.json
+.cache
 
 # Prerequisites
 *.d

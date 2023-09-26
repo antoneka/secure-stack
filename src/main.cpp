@@ -7,11 +7,13 @@ int main()
 {
   Stack stk = {};
 
-  int creation_staus = STACK_CTOR(&stk);
+  int creation_staus = STACK_CTOR(&stk, 2);
 
   stackPush(&stk, 2);
 
   stackPush(&stk, 5);
+
+  STACK_DUMP(&stk);
 
   stackPush(&stk, 7);
 
@@ -20,7 +22,9 @@ int main()
   elem_t element;
 
   stackPop(&stk, &element);
-  printf("poped elem = " elem_modifier "\n", element);
+
+  fprintf(stk.log_output, "poped elem = " elem_modifier "\n\n", element);
+  
 
   STACK_DUMP(&stk);
 
