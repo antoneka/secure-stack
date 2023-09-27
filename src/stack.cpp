@@ -1,7 +1,7 @@
 #include <assert.h>
-#include "common.h"
-#include "stack_protection.h"
+#include <stdlib.h>
 #include "stack.h"
+#include "stack_debug.h"
 
 static void appendCanaries(Stack *stk);
 
@@ -11,11 +11,50 @@ static void shiftArray(Stack *stk, size_t shift, ShiftDir direction);
 
 //-----------------------------------------------------------------------------------------------------------
 
+static void appendCanaries(Stack *stk)
+{
+  canary_t *canary_left = (canary_t*)stk->data;
+  canary_t *canary_right = (canary_t*)((elem_t*)(canary_left + 1) + stk->capacity);
+
+  *canary_left = CANARY_VALUE;
+  *canary_right = CANARY_VALUE;
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
+static void fillWithPoison(Stack *stk, size_t src, size_t dst)
+{
+  for (size_t elem_cnt = src; elem_cnt < dst; elem_cnt++) 
+    {
+      stk->data[elem_cnt] = POISON_VALUE;
+    }
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
+static void shiftArray(Stack *stk, size_t shift, ShiftDir direction)
+{
+  canary_t* data_canary_cast = (canary_t*)stk->data;
+
+  if (direction == LEFT_SHIFT)
+    {
+      data_canary_cast -= shift;
+    }
+  else if (direction == RIGHT_SHIFT)
+    {
+      data_canary_cast += shift;
+    }
+
+  stk->data = (elem_t*)data_canary_cast;
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
 ExecStatus stackCtor(Stack *stk, size_t initial_cap, const char *var_name, 
                      const char *file_name, size_t line_num, const char *func_name)
 {
   if (stk == nullptr)
-    {
+    { 
       fprintf(stderr, "Stack pointer passed to the constructor is NULL\n");
 
       return STACK_PTR_IS_NULL;
@@ -25,7 +64,7 @@ ExecStatus stackCtor(Stack *stk, size_t initial_cap, const char *var_name,
     {
       return STACK_ALREADY_CONSTRUCTED;
     }
-  
+
   stk->capacity = initial_cap;
   stk->size = 0;
 
@@ -80,6 +119,8 @@ ExecStatus stackCtor(Stack *stk, size_t initial_cap, const char *var_name,
 
   stk->init_status = CONSTRUCTED;
 
+  STACK_ASSERT(stk);
+
   return EXECUTION_SUCCESS;
 } 
 
@@ -129,45 +170,6 @@ ExecStatus stackPop(Stack *stk, elem_t *return_value)
     }
 
   return EXECUTION_SUCCESS;
-}
-
-//-----------------------------------------------------------------------------------------------------------
-
-static void appendCanaries(Stack *stk)
-{
-  canary_t *canary_left = (canary_t*)stk->data;
-  canary_t *canary_right = (canary_t*)((elem_t*)(canary_left + 1) + stk->capacity);
-
-  *canary_left = CANARY_VALUE;
-  *canary_right = CANARY_VALUE;
-}
-
-//-----------------------------------------------------------------------------------------------------------
-
-static void fillWithPoison(Stack *stk, size_t src, size_t dst)
-{
-  for (size_t elem_cnt = src; elem_cnt < dst; elem_cnt++) 
-    {
-      stk->data[elem_cnt] = POISON_VALUE;
-    }
-}
-
-//-----------------------------------------------------------------------------------------------------------
-
-static void shiftArray(Stack *stk, size_t shift, ShiftDir direction)
-{
-  canary_t* data_canary_cast = (canary_t*)stk->data;
-
-  if (direction == LEFT_SHIFT)
-    {
-      data_canary_cast -= shift;
-    }
-  else if (direction == RIGHT_SHIFT)
-    {
-      data_canary_cast += shift;
-    }
-
-  stk->data = (elem_t*)data_canary_cast;
 }
 
 //-----------------------------------------------------------------------------------------------------------
@@ -223,13 +225,18 @@ ExecStatus stackResize(Stack *stk, size_t new_capacity)
 
 ExecStatus stackDtor(Stack *stk)
 {
-  STACK_ASSERT(stk);
+  if (stk == nullptr)
+    {
+      fprintf(stderr, "Stack pointer passed to the destructor is NULL\n");
+
+      return STACK_PTR_IS_NULL;
+    }
 
   if (stk->init_status == DESTRUCTED)
     {
       return STACK_ALREADY_DESTRUCTED;
     }
- 
+
   stk->capacity = 0;
   stk->size = 0;
   stk->err_code = 0;
