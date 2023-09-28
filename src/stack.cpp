@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "stack.h"
 #include "stack_debug.h"
+#include "stack_hash.h"
 
 static void appendCanaries(Stack *stk);
 
@@ -67,7 +68,6 @@ ExecStatus stackCtor(Stack *stk, size_t initial_cap, const char *var_name,
 
   stk->capacity = initial_cap;
   stk->size = 0;
-
   stk->err_code = 0;
 
   stk->var = var_name;
@@ -103,7 +103,7 @@ ExecStatus stackCtor(Stack *stk, size_t initial_cap, const char *var_name,
       shiftArray(stk, 1, RIGHT_SHIFT);
 
       fillWithPoison(stk, 0, stk->capacity);
-    );
+    )
 
   NO_DEBUG
     (
@@ -115,9 +115,14 @@ ExecStatus stackCtor(Stack *stk, size_t initial_cap, const char *var_name,
 
           return STACK_ALLOCATION_ERROR;
         }
-    );
+    )
 
   stk->init_status = CONSTRUCTED;
+
+  ON_DEBUG
+    (
+        stk->hash = hashCalc(stk);
+    )
 
   STACK_ASSERT(stk);
 
@@ -144,6 +149,11 @@ ExecStatus stackPush(Stack *stk, elem_t value)
   
   stk->data[stk->size++] = value;
 
+  ON_DEBUG
+    (
+      stk->hash = hashCalc(stk);
+    )
+
   return EXECUTION_SUCCESS;
 }
 
@@ -168,6 +178,11 @@ ExecStatus stackPop(Stack *stk, elem_t *return_value)
           return resize_status;
         }
     }
+
+  ON_DEBUG
+    (
+      stk->hash = hashCalc(stk);
+    )
 
   return EXECUTION_SUCCESS;
 }
@@ -200,7 +215,9 @@ ExecStatus stackResize(Stack *stk, size_t new_capacity)
       shiftArray(stk, 1, RIGHT_SHIFT);
 
       fillWithPoison(stk, stk->size, stk->capacity);
-    );
+
+      stk->hash = hashCalc(stk);
+    )
 
   NO_DEBUG
     (
@@ -215,8 +232,8 @@ ExecStatus stackResize(Stack *stk, size_t new_capacity)
 
       stk->data = data_tmp;
 
-      fillWithPosion(stk, stk->size, stk->capacity);
-    );
+      fillWithPoison(stk, stk->size, stk->capacity);
+    )
 
   return EXECUTION_SUCCESS;
 }
@@ -250,7 +267,8 @@ ExecStatus stackDtor(Stack *stk)
     (
       stk->stack_left_can = POISON_VALUE;
       stk->stack_right_can = POISON_VALUE;
-    );
+      stk->hash = POISON_VALUE;
+    )
 
   if (stk->log_output != nullptr)
     {

@@ -49,6 +49,7 @@ enum ExecStatus
   STACK_ALREADY_CONSTRUCTED    = 1 << 10,
   STACK_ALREADY_DESTRUCTED     = 1 << 11,
   STACK_PTR_IS_NULL            = 1 << 12,
+  HASH_CORRUPTED               = 1 << 13,
 };
 
 enum StackStatus
@@ -86,7 +87,7 @@ struct Stack
   int err_code;
 
   ON_DEBUG(
-  long long hash;
+  unsigned int hash;
   canary_t stack_right_can;
       );
 };

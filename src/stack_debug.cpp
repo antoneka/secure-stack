@@ -1,4 +1,5 @@
 #include "stack_debug.h"
+#include "stack_hash.h"
 #include <stdint.h>
 
 void stackDump(Stack *stk, const char *file_name, size_t line_num, const char *func_name)
@@ -87,6 +88,13 @@ int stackCheck(Stack *stk)
         {
           stk->err_code |= RIGHT_CANARY_DATA_CORRUPTED;
         }
+
+      unsigned int correct_hash = hashCalc(stk);
+
+      if (correct_hash != stk->hash)
+        {
+          stk->err_code |= HASH_CORRUPTED;
+        }
     )
 
   return stk->err_code;
@@ -152,6 +160,11 @@ void printErrors(Stack *stk, const char *file_name, size_t line_num, const char 
   if (errors & RIGHT_CANARY_DATA_CORRUPTED)
     {
       fprintf(log_file, "Right canary of the data array is corrupted\n");
+    }
+
+  if (errors & HASH_CORRUPTED)
+    {
+      fprintf(log_file, "The hash was corrupted\n");
     }
 }
 

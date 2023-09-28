@@ -26,13 +26,14 @@ int main()
   
   stackPop(&stk, &element);
 
-//  STACK_DUMP(&stk);
-  stackPop(&stk, &element);
+  stk.hash = 96;
 
 //  STACK_DUMP(&stk);
   stackPop(&stk, &element);
 
+//  STACK_DUMP(&stk);
   stackPop(&stk, &element);
+
 
 
   int destruction_status = stackDtor(&stk);
