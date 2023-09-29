@@ -28,8 +28,8 @@
 typedef int elem_t;
 typedef unsigned long long canary_t;
 
-const size_t STANDART_CAPACITY =         15;
-const size_t RESIZE_COEF       =          2;
+const size_t STANDART_CAPACITY = 15;
+const size_t RESIZE_COEF       = 2;
 
 const elem_t POISON_VALUE      = (elem_t)0xDADD0FAC;
 const canary_t CANARY_VALUE    = (canary_t)0xBADC0FFEE;

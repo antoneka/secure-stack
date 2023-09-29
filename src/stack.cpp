@@ -167,6 +167,12 @@ ExecStatus stackPop(Stack *stk, elem_t *return_value)
 
   stk->data[stk->size] = POISON_VALUE;
 
+  ON_DEBUG
+    (
+      stk->hash = hashCalc(stk);
+    )
+
+  // 
   if (stk->size * RESIZE_COEF < stk->capacity)
     {
       ExecStatus resize_status = stackResize(stk, stk->capacity / RESIZE_COEF);
@@ -178,11 +184,6 @@ ExecStatus stackPop(Stack *stk, elem_t *return_value)
           return resize_status;
         }
     }
-
-  ON_DEBUG
-    (
-      stk->hash = hashCalc(stk);
-    )
 
   return EXECUTION_SUCCESS;
 }

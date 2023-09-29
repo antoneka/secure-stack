@@ -11,7 +11,7 @@ void stackDump(Stack *stk, const char *file_name, size_t line_num, const char *f
 
   FILE *log_file = stk->log_output == nullptr ? stderr : stk->log_output;
 
-  fprintf(log_file, "Stack [%p] %s from %s(%zu) %s() called from %s(%zu) %s()\n",
+  fprintf(log_file, "Stack [%p] %s is declared in %s(%zu) %s() called from %s(%zu) %s()\n",
                      stk, stk->var, stk->file, stk->line, stk->func, file_name, line_num, func_name);
 
   fprintf(log_file, "{\n"
@@ -144,27 +144,41 @@ void printErrors(Stack *stk, const char *file_name, size_t line_num, const char 
 
   if (errors & LEFT_CANARY_STACK_CORRUPTED)
     {
-      fprintf(log_file, "Left canary of the stack is corrupted\n");
+      fprintf(log_file, "Left canary of the stack is corrupted\n"
+                        "Current canary value: " CANARY_MODIFIER "\n"
+                        "Correct canary value: " CANARY_MODIFIER "\n\n", 
+                        stk->stack_left_can, CANARY_VALUE);
     }
 
   if (errors & RIGHT_CANARY_STACK_CORRUPTED)
     {
-      fprintf(log_file, "Right canary of the stack is corrupted\n");
+      fprintf(log_file, "Right canary of the stack is corrupted\n"
+                        "Current canary value: " CANARY_MODIFIER "\n"
+                        "Correct canary value: " CANARY_MODIFIER "\n\n", 
+                        stk->stack_right_can, CANARY_VALUE);
     }
 
   if (errors & LEFT_CANARY_DATA_CORRUPTED)
     {
-      fprintf(log_file, "Left canary of the data array is corrupted\n");
+      fprintf(log_file, "Left canary of the data array is corrupted\n"
+                        "Current canary value: " CANARY_MODIFIER "\n"
+                        "Correct canary value: " CANARY_MODIFIER "\n\n", 
+                        *((canary_t*)stk->data - 1), CANARY_VALUE);
     }
 
   if (errors & RIGHT_CANARY_DATA_CORRUPTED)
     {
-      fprintf(log_file, "Right canary of the data array is corrupted\n");
+      fprintf(log_file, "Right canary of the data array is corrupted\n"
+                        "Current canary value: " CANARY_MODIFIER "\n"
+                        "Correct canary value: " CANARY_MODIFIER "\n\n", 
+                        *(canary_t*)(stk->data + stk->capacity), CANARY_VALUE);
     }
 
   if (errors & HASH_CORRUPTED)
     {
-      fprintf(log_file, "The hash was corrupted\n");
+      fprintf(log_file, "The hash was corrupted\n"
+                        "Current hash: %u\n"
+                        "Correct hash: %u\n\n", stk->hash, hashCalc(stk));
     }
 }
 

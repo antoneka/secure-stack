@@ -1,12 +1,16 @@
 #include <stdio.h>
 #include "stack.h"
 #include "stack_debug.h"
+#include <string.h>
 
 int main()
 {
   Stack stk = {};
 
+
   int creation_status = STACK_CTOR(&stk, 2);
+
+//  memset(&stk, 0xcc, sizeof(stk));
 
   stackPush(&stk, 2);
 
@@ -18,7 +22,7 @@ int main()
 
  // STACK_DUMP(&stk);
 
-  elem_t element;
+  elem_t element = {};
 
   stackPop(&stk, &element);
 
@@ -26,7 +30,7 @@ int main()
   
   stackPop(&stk, &element);
 
-  stk.hash = 96;
+//  stk.hash = 96;
 
 //  STACK_DUMP(&stk);
   stackPop(&stk, &element);
