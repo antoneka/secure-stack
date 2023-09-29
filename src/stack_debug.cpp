@@ -2,14 +2,18 @@
 #include "stack_hash.h"
 #include <stdint.h>
 
-void stackDump(Stack *stk, const char *file_name, size_t line_num, const char *func_name)
+void stackDump(Stack *stk, const char *file_name, size_t line_num, 
+               const char *func_name, FILE *log_file)
 {
   if (stk == nullptr)
     {
       return;
     }
 
-  FILE *log_file = stk->log_output == nullptr ? stderr : stk->log_output;
+  if (log_file == nullptr)
+    {
+      log_file = stderr;
+    }
 
   fprintf(log_file, "Stack [%p] %s is declared in %s(%zu) %s() called from %s(%zu) %s()\n",
                      stk, stk->var, stk->file, stk->line, stk->func, file_name, line_num, func_name);
@@ -35,7 +39,7 @@ void stackDump(Stack *stk, const char *file_name, size_t line_num, const char *f
   fprintf(log_file, "\t}\n"
                     "}\n\n");
 
-  fprintf(log_file, "============================================================================\n\n");
+  fprintf(log_file, "==================================================================================\n\n");
 }
 
 //-----------------------------------------------------------------------------------------------------------
@@ -47,22 +51,17 @@ int stackCheck(Stack *stk)
       return STACK_PTR_IS_NULL;
     }
 
-  if (stk->log_output == nullptr)
-    {
-      stk->err_code |= LOGFILE_OPENING_ERROR;
-    }
-
   if (stk->data == nullptr)
     {
       stk->err_code |= STACK_ALLOCATION_ERROR;
     }
 
-  if (stk->capacity == SIZE_MAX)
+  if (stk->capacity == SIZE_MAX || stk->capacity < 0)
     {
       stk->err_code |= STACK_CAPACITY_ERROR;
     }
 
-  if (stk->size == SIZE_MAX || stk->size > stk->capacity)
+  if (stk->size == SIZE_MAX || stk->size > stk->capacity || stk->size < 0)
     {
       stk->err_code |= STACK_SIZE_ERROR;
     }
@@ -102,44 +101,42 @@ int stackCheck(Stack *stk)
 
 //-----------------------------------------------------------------------------------------------------------
 
-void printErrors(Stack *stk, const char *file_name, size_t line_num, const char *func_name)
+void printErrors(Stack *stk, const char *file_name, size_t line_num, 
+                 const char *func_name, FILE *log_file)
 {
   if (stk == nullptr)
     {
-      fprintf(stderr, "Stack pointer passed to the function %s():%zu from %s is NULL\n",
-                       func_name, line_num, file_name);
+      fprintf(log_file, "Stack pointer passed to the function %s():%zu from %s is NULL\n",
+                         func_name, line_num, file_name);
 
       return;
+    }
+
+  if (log_file == nullptr)
+    {
+      log_file = stderr;
     }
 
   int errors = stk->err_code;
-  FILE *log_file = stk->log_output == nullptr ? stderr : stk->log_output;
-
-  if (errors & LOGFILE_OPENING_ERROR)
-    {
-      fprintf(log_file, "Failed to open a log file\n");
-
-      return;
-    }
 
   if (errors & STACK_ALLOCATION_ERROR)
     {
-      fprintf(log_file, "Failed to allocate memory for the data array\n");
+      fprintf(log_file, "Failed to allocate memory for the data array\n\n");
     }
 
   if (errors & STACK_REALLOCATION_ERROR)
     {
-      fprintf(log_file, "Failed to resize the data array\n");
+      fprintf(log_file, "Failed to resize the data array\n\n");
     }
 
   if (errors & STACK_CAPACITY_ERROR)
     {
-      fprintf(log_file, "Invalid capacity value\n");
+      fprintf(log_file, "Invalid capacity value\n\n");
     }
 
   if (errors & STACK_SIZE_ERROR)
     {
-      fprintf(log_file, "Invalid size value\n");
+      fprintf(log_file, "Invalid size value\n\n");
     }
 
   if (errors & LEFT_CANARY_STACK_CORRUPTED)

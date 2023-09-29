@@ -2,10 +2,9 @@
 #define STACK_HASH_H
 
 #include <stdio.h>
-#include "stack.h"
 
-unsigned int hashFunc(const char * arr, const size_t nbytes);
+//-----------------------------------------------------------------------------------------------------------
 
-unsigned int hashCalc(Stack *stk);
+unsigned int hashRot13(const char * arr, const size_t nbytes);
 
-#endif
+#endif  // STACK_HASH_H
