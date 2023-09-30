@@ -139,43 +139,51 @@ void printErrors(Stack *stk, const char *file_name, size_t line_num,
       fprintf(log_file, "Invalid size value\n\n");
     }
 
-  if (errors & LEFT_CANARY_STACK_CORRUPTED)
+  if (errors & POPVALUE_PTR_IS_NULL)
     {
-      fprintf(log_file, "Left canary of the stack is corrupted\n"
-                        "Current canary value: " CANARY_MODIFIER "\n"
-                        "Correct canary value: " CANARY_MODIFIER "\n\n", 
-                        stk->stack_left_can, CANARY_VALUE);
+      fprintf(log_file, "Popped value pointer passed to the pop function is NULL\n\n");
     }
 
-  if (errors & RIGHT_CANARY_STACK_CORRUPTED)
-    {
-      fprintf(log_file, "Right canary of the stack is corrupted\n"
-                        "Current canary value: " CANARY_MODIFIER "\n"
-                        "Correct canary value: " CANARY_MODIFIER "\n\n", 
-                        stk->stack_right_can, CANARY_VALUE);
-    }
+  ON_DEBUG
+    (
+      if (errors & LEFT_CANARY_STACK_CORRUPTED)
+        {
+          fprintf(log_file, "Left canary of the stack is corrupted\n"
+                            "Current left canary value: " CANARY_MODIFIER "\n"
+                            "Correct canary value: " CANARY_MODIFIER "\n\n", 
+                            stk->stack_left_can, CANARY_VALUE);
+        }
 
-  if (errors & LEFT_CANARY_DATA_CORRUPTED)
-    {
-      fprintf(log_file, "Left canary of the data array is corrupted\n"
-                        "Current canary value: " CANARY_MODIFIER "\n"
-                        "Correct canary value: " CANARY_MODIFIER "\n\n", 
-                        *((canary_t*)stk->data - 1), CANARY_VALUE);
-    }
+      if (errors & RIGHT_CANARY_STACK_CORRUPTED)
+        {
+          fprintf(log_file, "Right canary of the stack is corrupted\n"
+                            "Current right canary value: " CANARY_MODIFIER "\n"
+                            "Correct canary value: " CANARY_MODIFIER "\n\n", 
+                            stk->stack_right_can, CANARY_VALUE);
+        }
 
-  if (errors & RIGHT_CANARY_DATA_CORRUPTED)
-    {
-      fprintf(log_file, "Right canary of the data array is corrupted\n"
-                        "Current canary value: " CANARY_MODIFIER "\n"
-                        "Correct canary value: " CANARY_MODIFIER "\n\n", 
-                        *(canary_t*)(stk->data + stk->capacity), CANARY_VALUE);
-    }
+      if (errors & LEFT_CANARY_DATA_CORRUPTED)
+        {
+          fprintf(log_file, "Left canary of the data array is corrupted\n"
+                            "Current left canary value: " CANARY_MODIFIER "\n"
+                            "Correct canary value: " CANARY_MODIFIER "\n\n", 
+                            *((canary_t*)stk->data - 1), CANARY_VALUE);
+        }
 
-  if (errors & HASH_CORRUPTED)
-    {
-      fprintf(log_file, "The hash was corrupted\n"
-                        "Current hash: %u\n"
-                        "Correct hash: %u\n\n", stk->hash, hashCalc(stk));
-    }
+      if (errors & RIGHT_CANARY_DATA_CORRUPTED)
+        {
+          fprintf(log_file, "Right canary of the data array is corrupted\n"
+                            "Current right canary value: " CANARY_MODIFIER "\n"
+                            "Correct canary value: " CANARY_MODIFIER "\n\n", 
+                            *(canary_t*)(stk->data + stk->capacity), CANARY_VALUE);
+        }
+
+      if (errors & HASH_CORRUPTED)
+        {
+          fprintf(log_file, "The hash was corrupted\n"
+                            "Current hash: %u\n"
+                            "Correct hash: %u\n\n", stk->hash, hashCalc(stk));
+        }
+    )
 }
 

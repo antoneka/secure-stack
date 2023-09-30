@@ -95,8 +95,6 @@ ExecStatus stackCtor(Stack *stk, size_t initial_cap, const char *var_name,
       return STACK_ALLOCATION_ERROR;
     }
 
-  stk->init_status = CONSTRUCTED;
-
   ON_DEBUG
     (
       stk->stack_left_can = CANARY_VALUE;
@@ -105,10 +103,15 @@ ExecStatus stackCtor(Stack *stk, size_t initial_cap, const char *var_name,
       appendCanaries(stk);
 
       shiftArray(stk, RIGHT_SHIFT);
+    )
 
-      fillWithPoison(stk, 0, stk->capacity);
+  fillWithPoison(stk, 0, stk->capacity);
 
-      stk->hash = hashCalc(stk);
+  stk->init_status = CONSTRUCTED;
+
+  ON_DEBUG
+    (
+     stk->hash = hashCalc(stk);
     )
 
   STACK_ASSERT(stk);
@@ -152,6 +155,13 @@ ExecStatus stackPop(Stack *stk, elem_t *return_value)
 {
   STACK_ASSERT(stk);
 
+  if (return_value == nullptr)
+    {
+      stk->err_code |= POPVALUE_PTR_IS_NULL;
+
+      return POPVALUE_PTR_IS_NULL;
+    }
+
   *return_value = stk->data[--stk->size];
 
   stk->data[stk->size] = POISON_VALUE;
@@ -161,7 +171,6 @@ ExecStatus stackPop(Stack *stk, elem_t *return_value)
       stk->hash = hashCalc(stk);
     )
 
-  // 
   if (stk->size * MAX_DIFF_COEF < stk->capacity)
     {
       ExecStatus resize_status = stackResize(stk, stk->capacity / RESIZE_COEF);
@@ -223,6 +232,7 @@ ExecStatus stackResize(Stack *stk, size_t new_capacity)
 
 //-----------------------------------------------------------------------------------------------------------
 
+ON_DEBUG(
 unsigned int hashCalc(Stack *stk)
 {
   unsigned int old_hash = stk->hash;
@@ -242,6 +252,7 @@ unsigned int hashCalc(Stack *stk)
 
   return new_hash;
 }
+)
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -273,9 +284,9 @@ ExecStatus stackDtor(Stack *stk)
       stk->stack_left_can = POISON_VALUE;
       stk->stack_right_can = POISON_VALUE;
       stk->hash = POISON_VALUE;
-    )
 
-  shiftArray(stk, LEFT_SHIFT);
+      shiftArray(stk, LEFT_SHIFT);
+    )
 
   free(stk->data);
   stk->data = nullptr;

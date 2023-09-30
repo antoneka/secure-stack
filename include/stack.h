@@ -21,7 +21,7 @@
 typedef int elem_t;
 typedef unsigned long long canary_t;
 
-const size_t STANDART_CAPACITY = 4;
+const size_t STANDART_CAPACITY = 8;
 const size_t RESIZE_COEF       = 2;
 const size_t MAX_DIFF_COEF     = 3;
 
@@ -42,7 +42,8 @@ enum ExecStatus
   STACK_ALREADY_CONSTRUCTED    = 1 << 9,
   STACK_ALREADY_DESTRUCTED     = 1 << 10,
   STACK_PTR_IS_NULL            = 1 << 11,
-  HASH_CORRUPTED               = 1 << 12,
+  POPVALUE_PTR_IS_NULL         = 1 << 12,
+  HASH_CORRUPTED               = 1 << 13,
 };
 
 enum StackStatus
