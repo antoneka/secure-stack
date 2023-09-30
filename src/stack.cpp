@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "stack.h"
 #include "stack_debug.h"
-#include "stack_hash.h"
+#include "hash_rot13.h"
 
 //-----------------------------------------------------------------------------------------------------------
 

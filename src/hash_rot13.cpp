@@ -1,4 +1,4 @@
-#include "stack_hash.h"
+#include "hash_rot13.h"
 
 unsigned int hashRot13(const char * arr, const size_t nbytes)
 {

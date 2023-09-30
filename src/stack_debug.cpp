@@ -1,5 +1,5 @@
 #include "stack_debug.h"
-#include "stack_hash.h"
+#include "hash_rot13.h"
 #include <stdint.h>
 
 void stackDump(Stack *stk, const char *file_name, size_t line_num, 
@@ -32,7 +32,7 @@ void stackDump(Stack *stk, const char *file_name, size_t line_num,
         }
       else 
         {
-          fprintf(log_file, "\t\t [%zu] = " ELEM_MODIFIER "\n", stk_elem, stk->data[stk_elem]);
+          fprintf(log_file, "\t\t [%zu] = " ELEM_MODIFIER " (POISON)\n", stk_elem, stk->data[stk_elem]);
         } 
     }
   
