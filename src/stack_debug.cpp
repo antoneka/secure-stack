@@ -56,12 +56,12 @@ int stackCheck(Stack *stk)
       stk->err_code |= STACK_ALLOCATION_ERROR;
     }
 
-  if (stk->capacity == SIZE_MAX || stk->capacity < 0)
+  if (stk->capacity == SIZE_MAX)
     {
       stk->err_code |= STACK_CAPACITY_ERROR;
     }
 
-  if (stk->size == SIZE_MAX || stk->size > stk->capacity || stk->size < 0)
+  if (stk->size == SIZE_MAX || stk->size > stk->capacity)
     {
       stk->err_code |= STACK_SIZE_ERROR;
     }
