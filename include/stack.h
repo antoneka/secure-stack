@@ -21,7 +21,7 @@
 typedef int elem_t;
 typedef unsigned long long canary_t;
 
-const size_t STANDART_CAPACITY = 8;
+const size_t STANDARD_CAPACITY = 8;
 const size_t RESIZE_COEF       = 2;
 const size_t MAX_DIFF_COEF     = 3;
 
@@ -90,7 +90,9 @@ ExecStatus stackPop(Stack *stk, elem_t *return_value);
 
 ExecStatus stackResize(Stack *stk, size_t new_capacity);
 
+ON_DEBUG(
 unsigned int hashCalc(Stack *stk);
+)
 
 ExecStatus stackDtor(Stack *stk);
 

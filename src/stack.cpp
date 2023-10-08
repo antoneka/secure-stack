@@ -194,7 +194,7 @@ ExecStatus stackResize(Stack *stk, size_t new_capacity)
 {
   STACK_ASSERT(stk);
 
-  stk->capacity = new_capacity > 0 ? new_capacity : STANDART_CAPACITY;
+  stk->capacity = new_capacity > 0 ? new_capacity : STANDARD_CAPACITY;
 
   ON_DEBUG
     (
@@ -227,6 +227,8 @@ ExecStatus stackResize(Stack *stk, size_t new_capacity)
       stk->hash = hashCalc(stk);
     )
 
+  STACK_ASSERT(stk);
+
   return EXECUTION_SUCCESS;
 }
 
@@ -235,6 +237,8 @@ ExecStatus stackResize(Stack *stk, size_t new_capacity)
 ON_DEBUG(
 unsigned int hashCalc(Stack *stk)
 {
+  assert(stk != nullptr);
+
   unsigned int old_hash = stk->hash;
   unsigned int new_hash = 0;
 
