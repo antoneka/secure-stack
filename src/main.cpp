@@ -15,7 +15,7 @@ int main()
       return 1;
     }
 
-  elem_t element = {};
+  elem_t element = 0;
 
   STACK_DUMP(&stk, stderr);
 
